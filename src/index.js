@@ -12,14 +12,15 @@ import routes       from './app.js';
 const app = express();
 
 // Catches all uncaught errors and logs
-process.on('uncaughtException', (err) => {
-    console.log('An error occured')
-    console.log(err);
-});
+// process.on('uncaughtException', (err) => {
+//     console.log('An error occured')
+//     console.log(err);
+// });
 
 console.log = (msg) => {
+    debugger;
     const now = moment().format('MMMM Do YYYY, h:mm:ss a');
-    process.stdout.write(util.format('[' + now + ']' + ' ' + msg) + '\n');
+    process.stdout.write(util.format('[' + now + ']' + ' ' + JSON.stringify(msg, null, 2)) + '\n');
 };
 
 console.log('Starting thing');
