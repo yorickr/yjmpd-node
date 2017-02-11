@@ -8,11 +8,16 @@ import log          from './logger.js';
 const parseFoundFiles = (files) => {
     return new Promise((resolve) => {
         const tags = files.map((file) => {
-            let songInfo = id3.read(file);
-            songInfo.image = undefined;
-            return {fileInfo: {path: file}, songInfo};
+            return new Promise((resolve) => {
+                let songInfo = id3.read(file);
+                songInfo.image = undefined;
+                resolve({fileInfo: {path: file}, songInfo});
+            });
         });
-        resolve(tags);
+        Promise.all(tags)
+        .then((allTags) => {
+            resolve(allTags);
+        });
     });
 };
 
