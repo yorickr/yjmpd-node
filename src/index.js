@@ -18,7 +18,6 @@ const app = express();
 // });
 
 console.log = (msg) => {
-    debugger;
     const now = moment().format('MMMM Do YYYY, h:mm:ss a');
     process.stdout.write(util.format('[' + now + ']' + ' ' + JSON.stringify(msg, null, 2)) + '\n');
 };
