@@ -15,6 +15,10 @@ import log          from './logger.js';
 const queue = kue.createQueue();
 const router = express.Router();
 
+var realFs = require('fs');
+var gracefulFs = require('graceful-fs');
+gracefulFs.gracefulify(realFs);
+
 router.get('/', (req, res) => {
     res.status(200);
     res.json(response(0, true, 'I am alive and well good sir'));

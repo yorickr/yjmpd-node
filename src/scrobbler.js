@@ -23,6 +23,7 @@ const parseFoundFiles = (files) => {
                 const tempData = metadata['id3v2.3'];
                 delete metadata['id3v2.3'];
                 metadata['id3'] = tempData;
+                log('Parsed ' + file);
                 resolveParser({fileInfo: {path: file}, songInfo: metadata});
             });
         });
