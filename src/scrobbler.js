@@ -23,9 +23,13 @@ const parseFoundFiles = (files) => {
                     resolveParser({fileInfo: {path: file}, songInfo: null});
                 }
                 // Why change 'id3v2.3' into 'id3'? Because json doesn't like the dot in the naming.
-                const tempData = metadata['id3v2.3'];
-                delete metadata['id3v2.3'];
-                metadata['id3'] = tempData;
+                Object.keys(metadata).map((flag) => {
+                    log('Flag is ' + flag);
+                    const tempData = metadata[flag];
+                    delete metadata[flag];
+                    metadata[flag.replace('.', '-')] = tempData;
+                });
+
                 log('Parsed ' + file);
                 resolveParser({fileInfo: {path: file}, songInfo: metadata});
             });
