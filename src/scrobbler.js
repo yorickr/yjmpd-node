@@ -1,7 +1,10 @@
+var fs          = require('fs');
+var gracefulFs      = require('graceful-fs');
+gracefulFs.gracefulify(fs);
+
 import filehound    from 'filehound';
 import id3          from 'node-id3';
 import mm           from 'music-metadata';
-import fs           from 'fs';
 import util         from 'util';
 
 import config       from '../config.json';
@@ -10,14 +13,14 @@ import log          from './logger.js';
 
 const parseFoundFiles = (files) => {
     const tags = files.map((file) => {
-        return new Promise((resolveParser, rejectParser) => {
+        return new Promise((resolveParser) => {
             const audioStream = fs.createReadStream(file);
             mm.parseStream(audioStream, {native: true}, function (err, metadata) {
                 audioStream.close();
                 if (err) {
                     log('Error while parsing');
                     log(err);
-                    rejectParser(err);
+                    resolveParser({fileInfo: {path: file}, songInfo: null});
                 }
                 // Why change 'id3v2.3' into 'id3'? Because json doesn't like the dot in the naming.
                 const tempData = metadata['id3v2.3'];
