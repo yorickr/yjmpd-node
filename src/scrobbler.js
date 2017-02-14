@@ -1,24 +1,33 @@
 import filehound    from 'filehound';
 import id3          from 'node-id3';
+import mm           from 'music-metadata';
+import fs           from 'fs';
+import util         from 'util';
 
 import config       from '../config.json';
 import Api          from './api.js';
 import log          from './logger.js';
 
 const parseFoundFiles = (files) => {
-    return new Promise((resolve) => {
-        const tags = files.map((file) => {
-            return new Promise((resolveSongInfo) => {
-                let songInfo = id3.read(file);
-                songInfo.image = undefined;
-                resolveSongInfo({fileInfo: {path: file}, songInfo});
+    const tags = files.map((file) => {
+        return new Promise((resolveParser, rejectParser) => {
+            const audioStream = fs.createReadStream(file);
+            mm.parseStream(audioStream, {native: true}, function (err, metadata) {
+                audioStream.close();
+                if (err) {
+                    log('Error while parsing');
+                    log(err);
+                    rejectParser(err);
+                }
+                // Why change 'id3v2.3' into 'id3'? Because json doesn't like the dot in the naming.
+                const tempData = metadata['id3v2.3'];
+                delete metadata['id3v2.3'];
+                metadata['id3'] = tempData;
+                resolveParser({fileInfo: {path: file}, songInfo: metadata});
             });
         });
-        Promise.all(tags)
-        .then((allTags) => {
-            resolve(allTags);
-        });
     });
+    return Promise.all(tags);
 };
 
 const checkMongoResponse = (response) => {
@@ -59,7 +68,7 @@ const scrobbler = () => {
     .catch((error) => {
         log('An error occured in scrobbler.js');
         throw error;
-    })
+    });
 };
 
 process.on('message', (m) => {

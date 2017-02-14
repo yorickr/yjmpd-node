@@ -3,6 +3,7 @@ import jwt          from 'jwt-simple';
 import filehound    from 'filehound';
 import id3          from 'node-id3';
 import kue          from 'kue';
+import cp           from 'child_process';
 
 import Api          from './api.js';
 import config       from '../config.json';
@@ -33,8 +34,6 @@ router.get('/songs/', (req, res) => {
 });
 
 router.put('/database', (req, res) => {
-    const cp = require('child_process');
-    log(`${__dirname}`);
     const n = cp.fork(`${__dirname}/scrobbler.js`);
     n.on('message', (m) => {
         log('Parent');
