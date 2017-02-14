@@ -12,7 +12,7 @@ export default {
                 if (err) {
                     reject(err);
                 } else {
-                    const coll = db.collection('yjpmd');
+                    const coll = db.collection('yjmpd');
                     resolve({coll, db});
                 }
             });
