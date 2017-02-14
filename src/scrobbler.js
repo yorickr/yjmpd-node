@@ -1,4 +1,5 @@
-var fs          = require('fs');
+// We need graceful-fs otherwise we're going to end up opening the amount of songs the user has at once
+var fs              = require('fs');
 var gracefulFs      = require('graceful-fs');
 gracefulFs.gracefulify(fs);
 
@@ -22,14 +23,12 @@ const parseFoundFiles = (files) => {
                     log(err);
                     resolveParser({fileInfo: {path: file}, songInfo: null});
                 }
-                // Why change 'id3v2.3' into 'id3'? Because json doesn't like the dot in the naming.
+                // Why change for example 'id3v2.3' into 'id3v2-3'? Because json doesn't like the dot in the naming.
                 Object.keys(metadata).map((flag) => {
-                    log('Flag is ' + flag);
                     const tempData = metadata[flag];
                     delete metadata[flag];
                     metadata[flag.replace('.', '-')] = tempData;
                 });
-
                 log('Parsed ' + file);
                 resolveParser({fileInfo: {path: file}, songInfo: metadata});
             });
