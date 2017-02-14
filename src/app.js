@@ -33,16 +33,17 @@ router.get('/songs/', (req, res) => {
 });
 
 router.put('/database', (req, res) => {
-    const job = queue.create('update database', {}).save((error) => {
-        if (!error) {
-            log(job.id);
+    const cp = require('child_process');
+    log(`${__dirname}`);
+    const n = cp.fork(`${__dirname}/scrobbler.js`);
+    n.on('message', (m) => {
+        log('Parent');
+        log(m);
+        if (m.success) {
+            log('Succesfully scrobbled for songs');
         }
     });
-    queue.process('update database', (job, done) => {
-        console.log(job);
-        scrobbler();
-        done();
-    });
+    n.send({ start: true});
     res.status(200);
     res.json(response(2, true, 'Started updating the database.'));
 });

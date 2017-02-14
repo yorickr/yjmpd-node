@@ -7,9 +7,9 @@
   "author": "yjpmrommers@gmail.com",
   "license": "MIT",
   "scripts": {
-    "dev-debug": "babel-watch -I  src/index.js",
-    "dev": "babel-watch -w src src/index.js",
-    "build": "babel src -d lib"
+    "dev": "yarn run build && yarn run start",
+    "build": "babel src -d lib",
+    "start": "node lib/index.js"
   },
   "dependencies": {
     "babel-cli": "^6.22.2",

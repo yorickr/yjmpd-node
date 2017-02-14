@@ -62,4 +62,11 @@ const scrobbler = () => {
     })
 };
 
+process.on('message', (m) => {
+    console.log('CHILD got message:', m);
+    scrobbler().then(() => {
+        process.send({succes: true});
+    });
+});
+
 export default scrobbler;
