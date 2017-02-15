@@ -119,7 +119,7 @@ const checkMongoResponse = (response) => {
 
 const scrobbler = () => {
     // Wipe everything from db
-    return Api.del([{}])
+    return Api.drop()
     .then(() => {
         log('Deleted Database');
         // Fetch new files

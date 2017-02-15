@@ -20,6 +20,22 @@ export default {
     },
 
     // Thou musn't forget to close thy db
+
+    drop () {
+        return new Promise((resolve, reject) => {
+            mongoClient.connect(url, (err, db) => {
+                db.dropDatabase((err, result) => {
+                    db.close();
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(result);
+                    }
+                });
+            });
+        });
+    },
+
     get (filter = {}) {
         return new Promise((resolve, reject) => {
             this.getCollection()
