@@ -47,27 +47,30 @@ const uploadToDatabase = (parsedFiles) => {
 
     parsedFiles.map((file) => {
         log(file);
-        const common = file.songInfo.common;
-        // Split off into album art and data, split genres, albums, year, artists
-        KEYARRAY.map((key, index) => { // populate arrays
-            try {
-                insertIfNotAlreadyIn(arrays[index], common[key]);
-            } catch (error) {
-                throw error;
-            }
-        });
+        // songinfo can be null :)
+        if (file.songInfo) {
+            const common = file.songInfo.common;
+            // Split off into album art and data, split genres, albums, year, artists
+            KEYARRAY.map((key, index) => { // populate arrays
+                try {
+                    insertIfNotAlreadyIn(arrays[index], common[key]);
+                } catch (error) {
+                    throw error;
+                }
+            });
 
-        // populate songs
-        delete common.picture;
-        const songInfo = file.songInfo;
-        Object.keys(songInfo).map((key) => {
-            log(key);
-            if (key.indexOf('id3') !== -1) {
-                delete songInfo[key]['APIC'];
-            }
-            log(songInfo);
-        });
-        songs.push(file);
+            // populate songs
+            delete common.picture;
+            const songInfo = file.songInfo;
+            Object.keys(songInfo).map((key) => {
+                log(key);
+                if (key.indexOf('id3') !== -1) {
+                    delete songInfo[key]['APIC'];
+                }
+                log(songInfo);
+            });
+            songs.push(file);
+        }
     });
     log(arrays);
     log('kok');
