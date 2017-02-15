@@ -4,13 +4,83 @@ var gracefulFs      = require('graceful-fs');
 gracefulFs.gracefulify(fs);
 
 import filehound    from 'filehound';
-import id3          from 'node-id3';
 import mm           from 'music-metadata';
-import util         from 'util';
 
 import config       from '../config.json';
 import Api          from './api.js';
 import log          from './logger.js';
+
+const uploadToDatabase = (parsedFiles) => {
+    const albums    = [];
+    const artists   = [];
+    const genres    = [];
+    const years     = [];
+    const songs     = [];
+
+    const arrays = [albums, artists, genres, years];
+
+    const insertIfNotAlreadyIn = (array, object) => {
+        if (object) {
+            if (object.constructor === Array) {
+                // if obj === array, check if content of array is already contained in array
+                const toAdd = object.map((obj) => {
+                    if (array.indexOf(obj) === -1) {
+                        return obj;
+                    }
+                });
+                toAdd.map((val) => {
+                    if(val) {
+                        array.push(val);
+                    }
+                });
+                log(array);
+                return;
+            } else if (array.indexOf(object) === -1) { // if not in array
+                array.push(object);
+                return;
+            }
+        }
+    };
+
+    // The index here has to match the index in 'songs'
+    const KEYARRAY = ['album', 'artist', 'genre', 'year'];
+
+    parsedFiles.map((file) => {
+        log(file);
+        const common = file.songInfo.common;
+        // Split off into album art and data, split genres, albums, year, artists
+        KEYARRAY.map((key, index) => { // populate arrays
+            try {
+                insertIfNotAlreadyIn(arrays[index], common[key]);
+            } catch (error) {
+                throw error;
+            }
+        });
+
+        // populate songs
+        delete common.picture;
+        const songInfo = file.songInfo;
+        Object.keys(songInfo).map((key) => {
+            log(key);
+            if (key.indexOf('id3') !== -1) {
+                delete songInfo[key]['APIC'];
+            }
+            log(songInfo);
+        });
+        songs.push(file);
+    });
+    log(arrays);
+    log('kok');
+    log(songs);
+    const promises = [
+        Api.put(songs ,'songs'),
+        Api.put([{albums}], 'albums'),
+        Api.put([{artists}], 'artists'),
+        Api.put([{genres}], 'genres'),
+        Api.put([{years}], 'years'),
+    ];
+    return Promise.all(promises);
+};
 
 const parseFoundFiles = (files) => {
     const tags = files.map((file) => {
@@ -47,7 +117,7 @@ const checkMongoResponse = (response) => {
 const scrobbler = () => {
     // Wipe everything from db
     return Api.del([{}])
-    .then((response) => {
+    .then(() => {
         log('Deleted Database');
         // Fetch new files
         return filehound.create()
@@ -61,16 +131,17 @@ const scrobbler = () => {
     })
     .then((taggedFiles) => {
         log('Uploading found files');
-        return Api.put(taggedFiles);
+        return uploadToDatabase(taggedFiles);
     })
     .then((response) => {
-        if (checkMongoResponse(response)){
-            log('Succesfully updated database');
-            return {success: true};
-        } else {
-            log('Error pushing data to database');
-            return {success: false};
-        }
+        log(response);
+        // if (checkMongoResponse(response)){
+        //     log('Succesfully updated database');
+        //     return {success: true};
+        // } else {
+        //     log('Error pushing data to database');
+        //     return {success: false};
+        // }
     })
     .catch((error) => {
         log('An error occured in scrobbler.js');
@@ -78,8 +149,7 @@ const scrobbler = () => {
     });
 };
 
-process.on('message', (m) => {
-    console.log('CHILD got message:', m);
+process.on('message', () => {
     scrobbler().then(() => {
         process.send({succes: true});
     });

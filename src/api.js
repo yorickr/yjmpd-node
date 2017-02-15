@@ -6,13 +6,13 @@ const mongoClient = mongodb.MongoClient;
 const url = config.dbUrl + config.dbName;
 
 export default {
-    getCollection () {
+    getCollection (collectionName = 'yjmpd') {
         return new Promise((resolve, reject) => {
             mongoClient.connect(url, (err, db) => {
                 if (err) {
                     reject(err);
                 } else {
-                    const coll = db.collection('yjmpd');
+                    const coll = db.collection(collectionName);
                     resolve({coll, db});
                 }
             });
@@ -27,21 +27,41 @@ export default {
                 coll.find(filter).toArray((err, result) => {
                     db.close();
                     if (err) {
-                        reject(err);
+                        throw err;
                     } else {
                         resolve(result);
                     }
                 });
             })
             .catch((error) => {
-                throw error;
+                reject(error);
             });
         });
     },
 
-    put (values) {
+    aggregate (filters) {
         return new Promise((resolve, reject) => {
             this.getCollection()
+            .then(({coll, db}) => {
+                coll.aggregate(filters).toArray((error, result) => {
+                    db.close();
+                    if (error) {
+                        throw error;
+                    } else {
+                        resolve(result);
+                    }
+                });
+            })
+            .catch((error) => {
+                reject(error);
+            });
+        });
+    },
+
+    put (values, targetCollection = undefined) {
+        return new Promise((resolve, reject) => {
+            //TODO: if shit breaks, it's here because of the undefined.
+            this.getCollection(targetCollection)
             .then(({coll, db}) => {
                 coll.insertMany(values, (err, result) => {
                     db.close();
@@ -54,7 +74,7 @@ export default {
             })
             .catch((error) => {
                 throw error;
-            })
+            });
         });
     },
 
@@ -80,4 +100,4 @@ export default {
             });
         });
     },
-}
+};
