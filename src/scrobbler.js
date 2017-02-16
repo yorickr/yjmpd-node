@@ -1,14 +1,12 @@
-// We need graceful-fs otherwise we're going to end up opening the amount of songs the user has at once
-var fs              = require('fs');
-var gracefulFs      = require('graceful-fs');
-gracefulFs.gracefulify(fs);
-
 import filehound    from 'filehound';
 import mm           from 'music-metadata';
+import filequeue    from 'filequeue';
 
 import config       from '../config.json';
 import Api          from './api.js';
 import log          from './logger.js';
+
+const fs = new filequeue(200);
 
 const uploadToDatabase = (parsedFiles) => {
     const albums    = [];
@@ -63,18 +61,14 @@ const uploadToDatabase = (parsedFiles) => {
             delete common.picture;
             const songInfo = file.songInfo;
             Object.keys(songInfo).map((key) => {
-                log(key);
                 if (key.indexOf('id3') !== -1) {
-                    delete songInfo[key]['APIC'];
+                    // delete image because this'll be contained in a different collection
+                    delete songInfo[key]['APIC']; 
                 }
-                log(songInfo);
             });
             songs.push(file);
         }
     });
-    log(arrays);
-    log('kok');
-    log(songs);
     const promises = [
         Api.put(songs ,'songs'),
         Api.put([{albums}], 'albums'),

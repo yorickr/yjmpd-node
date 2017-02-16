@@ -1350,6 +1350,10 @@ filename-regex@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/filename-regex/-/filename-regex-2.0.0.tgz#996e3e80479b98b9897f15a8a58b3d084e926775"
 
+filequeue@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/filequeue/-/filequeue-0.5.0.tgz#f0048a5af4530447dacef06c4868c50a11406179"
+
 filereader-stream@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/filereader-stream/-/filereader-stream-1.0.0.tgz#25e1728b1b4bd2b041a1ad005ccd1c6a22b43f3c"
