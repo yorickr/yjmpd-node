@@ -63,7 +63,8 @@ const uploadToDatabase = (parsedFiles) => {
             Object.keys(songInfo).map((key) => {
                 if (key.indexOf('id3') !== -1) {
                     // delete image because this'll be contained in a different collection
-                    delete songInfo[key]['APIC']; 
+                    delete songInfo[key]['APIC'];
+                    delete songInfo[key]['TP1'];
                 }
             });
             songs.push(file);
