@@ -18,7 +18,21 @@ router.get('/', (req, res) => {
 });
 
 // Song by id or all songs
-router.get('/songs/', (req, res) => {
+router.get('/songs/:id?', (req, res) => {
+    const trackId = req.params.id || null;
+    var query = Api.format('SELECT * FROM tracks;');
+    if (trackId) {
+        query = Api.format('SELECT * FROM tracks WHERE id = ?', [trackId]);
+    }
+    Api.execute(query)
+    .then((resp) => {
+        res.status(200);
+        res.json(response(1, true, 'Here are your songs.', resp.results));
+    })
+    .catch((error) => {
+        res.status(401);
+        res.json(response(2, false, 'Something went wrong.', error));
+    });
 });
 
 router.get('/artists/', (req, res) => {

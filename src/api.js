@@ -15,12 +15,14 @@ export default {
         return new Promise((resolve, reject) => {
             pool.getConnection((error, connection) => {
                 if (error) {
+                    log('Something went wrong getting a connection');
                     reject(error);
                     return;
                 } else {
                     connection.query(query, (error, results, fields) => {
                         connection.release();
                         if (error) {
+                            log('Something went wrong querying the database');
                             reject(error);
                             return;
                         } else {
