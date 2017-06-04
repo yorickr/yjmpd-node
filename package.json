@@ -1,5 +1,5 @@
 {
-  "name": "yjpmd-node",
+  "name": "yjmpd-node",
   "version": "1.0.0",
   "description": "Node version of the yjmp daemon",
   "main": "src/index.js",
@@ -8,7 +8,8 @@
   "license": "MIT",
   "scripts": {
     "dev-debug": "yarn run build && yarn run start-dev",
-    "dev": "yarn run build && yarn run start",
+    "dev-api": "babel-watch src/index.js",
+    "dev-scrobbler": "babel-watch src/scrobbler.js",
     "build": "babel src -d lib",
     "start": "node lib/index.js",
     "start-dev": "node --inspect lib/index.js"
@@ -22,15 +23,16 @@
     "babel-watch": "^2.0.6",
     "babelrc-rollup": "^3.0.0",
     "body-parser": "^1.16.0",
-    "eslint": "^3.15.0",
+    "eslint": "^3.19.0",
     "express": "^4.14.1",
-    "filehound": "^1.13.5",
+    "filehound": "^1.16.1",
     "filequeue": "^0.5.0",
     "jwt-simple": "^0.5.1",
     "kue": "^0.11.5",
     "moment": "^2.17.1",
     "mongodb": "^2.2.22",
     "music-metadata": "^0.6.1",
+    "mysql": "^2.13.0",
     "node-id3": "^0.0.9"
   }
 }

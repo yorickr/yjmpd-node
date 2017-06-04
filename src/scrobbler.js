@@ -8,87 +8,16 @@ import log          from './logger.js';
 
 const fs = new filequeue(200);
 
-const uploadToDatabase = (parsedFiles) => {
-    const albums    = [];
-    const artists   = [];
-    const genres    = [];
-    const years     = [];
-    const songs     = [];
-
-    const arrays = [albums, artists, genres, years];
-
-    const insertIfNotAlreadyIn = (array, object) => {
-        if (object) {
-            if (object.constructor === Array) {
-                // if obj === array, check if content of array is already contained in array
-                const toAdd = object.map((obj) => {
-                    if (array.indexOf(obj) === -1) {
-                        return obj;
-                    }
-                });
-                toAdd.map((val) => {
-                    if(val) {
-                        array.push(val);
-                    }
-                });
-                log(array);
-                return;
-            } else if (array.indexOf(object) === -1) { // if not in array
-                array.push(object);
-                return;
-            }
-        }
-    };
-
-    // The index here has to match the index in 'songs'
-    const KEYARRAY = ['album', 'artist', 'genre', 'year'];
-
-    parsedFiles.map((file) => {
-        log(file);
-        // songinfo can be null :)
-        if (file.songInfo) {
-            const common = file.songInfo.common;
-            // Split off into album art and data, split genres, albums, year, artists
-            KEYARRAY.map((key, index) => { // populate arrays
-                try {
-                    insertIfNotAlreadyIn(arrays[index], common[key]);
-                } catch (error) {
-                    throw error;
-                }
-            });
-
-            // populate songs
-            delete common.picture;
-            const songInfo = file.songInfo;
-            Object.keys(songInfo).map((key) => {
-                if (key.indexOf('id3') !== -1) {
-                    // delete image because this'll be contained in a different collection
-                    delete songInfo[key];
-                }
-            });
-            songs.push(file);
-        }
-    });
-    const promises = [
-        Api.put(songs ,'songs'),
-        Api.put([{albums}], 'albums'),
-        Api.put([{artists}], 'artists'),
-        Api.put([{genres}], 'genres'),
-        Api.put([{years}], 'years'),
-    ];
-    return Promise.all(promises);
-};
-
 const parseFoundFiles = (files) => {
-    const tags = files.map((file) => {
-        return new Promise((resolveParser) => {
+    const promises = files.map((file) => {
+        return new Promise((resolveFile, rejectFile) => {
             const audioStream = fs.createReadStream(file);
-            mm.parseStream(audioStream, {native: true}, function (err, metadata) {
+            mm.parseStream(audioStream, {native: true}, (error, metadata) => {
                 audioStream.close();
-                if (err) {
+                if (error) {
                     log('Error while parsing');
-                    log(err);
-                    resolveParser({fileInfo: {path: file}, songInfo: null});
+                    log(error);
+                    resolveFile({fileInfo: {path :file}, songInfo: null});
                 }
                 // Why change for example 'id3v2.3' into 'id3v2-3'? Because json doesn't like the dot in the naming.
                 Object.keys(metadata).map((flag) => {
@@ -96,49 +25,60 @@ const parseFoundFiles = (files) => {
                     delete metadata[flag];
                     metadata[flag.replace('.', '-')] = tempData;
                 });
-                log('Parsed ' + file);
-                resolveParser({fileInfo: {path: file}, songInfo: metadata});
+                resolveFile({fileInfo: {path: file}, songInfo: metadata});
             });
         });
     });
-    return Promise.all(tags);
-};
-
-const checkMongoResponse = (response) => {
-    if (response.result && response.result.ok === 1) {
-        return true;
-    }
-    return false;
+    return Promise.all(promises);
 };
 
 const scrobbler = () => {
     // Wipe everything from db
-    return Api.drop()
-    .then(() => {
-        log('Deleted Database');
-        // Fetch new files
-        return filehound.create()
-        .paths(config.musicDir)
-        .ext('mp3')
-        .find();
-    })
+    return filehound.create()
+    .paths(config.musicDir)
+    .ext('mp3')
+    .find()
     .then((foundFiles) => {
         log('Found files');
         return parseFoundFiles(foundFiles);
     })
-    .then((taggedFiles) => {
-        log('Uploading found files');
-        return uploadToDatabase(taggedFiles);
+    .then((response) => {
+        // upload to db here.
+        const promises = response.map((parsedFile) => {
+            return new Promise((resolve) => {
+                const {fileInfo, songInfo} = parsedFile;
+                const query = Api.format('INSERT INTO tracks (artist, trackNumber, diskNumber, album, genre, title, year, duration, trackFormat, bitrate, image, path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+                    [
+                        songInfo.common.artist,
+                        songInfo.common.track.no,
+                        songInfo.common.disk.no,
+                        songInfo.common.album,
+                        songInfo.common.genre,
+                        songInfo.common.title,
+                        songInfo.common.year,
+                        songInfo.format.duration,
+                        songInfo.format.dataformat,
+                        songInfo.format.bitrate,
+                        null,
+                        fileInfo.path,
+                    ]);
+                Api.execute(query)
+                .then((response) => {
+                    resolve(response);
+                })
+                .catch((error) => {
+                    if (error.errno !== 1062) {
+                        log(error);
+                    } else {
+                        resolve(); // it was just a duplicate error, so it's already in the db
+                    }
+                });
+            });
+        });
+        return Promise.all(promises);
     })
     .then((response) => {
-        log(response);
-        // if (checkMongoResponse(response)){
-        //     log('Succesfully updated database');
-        //     return {success: true};
-        // } else {
-        //     log('Error pushing data to database');
-        //     return {success: false};
-        // }
+        log('Uploaded songs');
     })
     .catch((error) => {
         log('An error occured in scrobbler.js');
@@ -146,10 +86,4 @@ const scrobbler = () => {
     });
 };
 
-process.on('message', () => {
-    scrobbler().then(() => {
-        process.send({succes: true});
-    });
-});
-
-export default scrobbler;
+scrobbler();

@@ -24,7 +24,7 @@ console.log = (msg) => {
 
 console.log('Starting thing');
 
-app.set('webPort', settings.webPort);
+app.set('apiPort', settings.apiPort);
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
@@ -34,21 +34,21 @@ app.all('*', (req, res, next) => {
     next();
 });
 
-app.all('/api/*', (req, res, next) => {
+app.all('/api*/*', (req, res, next) => {
     // Set response header
-	res.header("Access-Control-Allow-Origin","*");
-	res.header("Access-Control-Allow-Methods","GET,PUT,POST,DELETE,OPTIONS");
-	res.header("Access-Control-Allow-Headers","X-Requested-With,Content-type,Accept,X-Access-Token,X-Key");
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-type,Accept,X-Access-Token,X-Key');
 	// Set response contenttype
-	res.contentType('application/json');
-	next();
+    res.contentType('application/json');
+    next();
 });
 
 app.use('/api', routes);
 
 
 // Start server
-const PORT = process.env.PORT || app.get('webPort');
+const PORT = process.env.PORT || app.get('apiPort');
 const server = app.listen(PORT, () => {
     console.log('Actively listening on port ' + server.address().port);
 });

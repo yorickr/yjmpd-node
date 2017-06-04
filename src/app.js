@@ -1,7 +1,6 @@
 import express      from 'express';
 import jwt          from 'jwt-simple';
 import cp           from 'child_process';
-import {ObjectID}   from 'mongodb';
 
 import Api          from './api.js';
 import response     from './responses.js';
@@ -19,41 +18,16 @@ router.get('/', (req, res) => {
 });
 
 // Song by id or all songs
-router.get('/songs/:id?', (req, res) => {
-    const id = req.params.id || null;
-    let apiPromise = null;
-    if (id) {
-        const filter = {'_id': new ObjectID(id)};
-        apiPromise = Api.get(filter);
-    } else {
-        apiPromise = Api.get();
-    }
-    apiPromise
-    .then((songs) => {
-        res.status(200);
-        res.json(response(1, true, 'Here are your songs.', songs));
-    })
-    .catch((error) => {
-        res.status(401);
-        res.json(response(1, false, 'Could not get your songs.', error));
-    });
+router.get('/songs/', (req, res) => {
 });
 
-router.get('/genre/', (req, res) => {
-    const filters = [
-        {$match: {songInfo: { common: { genre: {'$exists': true}}}}}
-    ];
-    log(filters);
-    Api.aggregate(filters)
-    .then((genres) => {
-        log(genres);
-        res.status(200);
-        res.json(response(1, true, 'Here are your genres.', genres));
-    })
-    .catch((error) => {
-        res.status(401);
-        res.json(response(1, false, 'Could not get your genres.', error));
-    });
+router.get('/artists/', (req, res) => {
+});
+
+router.get('/genres/', (req, res) => {
+});
+
+router.get('/years/', (req, res) => {
 });
 
 router.put('/database', (req, res) => {
