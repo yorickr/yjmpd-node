@@ -61,7 +61,8 @@ router.get('/song/:id/:preserveFileName?', (req, res) => {
 router.get('/songs/:page?/:id?', (req, res) => {
     const trackId = req.params.id || null;
     const page = req.params.page || 0;
-    var query = Api.format('SELECT * FROM tracks LIMIT ?,?;', [ page * PAGE_SIZE, (page + 1) * PAGE_SIZE]);
+    // TODO: fix pagination in other calls
+    var query = Api.format('SELECT * FROM tracks LIMIT ? OFFSET ?;', [ PAGE_SIZE, page * PAGE_SIZE ]);
     if (trackId) {
         query = Api.format('SELECT * FROM tracks WHERE id = ?;', [trackId]);
     }
